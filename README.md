@@ -56,3 +56,19 @@ without one the first stretch of the movie has no chapter.
 pip install jsonschema
 python3 validate.py
 ```
+
+## Generating drafts from your Jellyfin library
+
+`tools/generate_drafts.py` reads your own server and writes draft files to `drafts/`:
+
+- `credits` from Jellyfin's credits segments (needs a plugin that detects them)
+- `post_credits` when there is dialogue more than a minute after the credits start
+- `music` from note-marked subtitle lines; SDH subtitles often name the song
+- `action` from clusters of SDH sound cues like `[GUNFIRE]` or `[EXPLOSION]`
+
+```sh
+python3 tools/generate_drafts.py --server http://jellyfin:8096 --api-key YOUR_KEY --limit 20
+```
+
+Create the API key under Dashboard > API Keys. Review each draft, fix or add markers,
+then move it to `movies/` and run `python3 validate.py`. Movies already in `movies/` are skipped.
