@@ -1,0 +1,16 @@
+{
+  "$schema": "../schema.json",
+  "schema_version": 1,
+  "tmdb_id": 348,
+  "imdb_id": "tt0078748",
+  "title": "Alien",
+  "year": 1979,
+  "runtime": "01:57:00",
+  "markers": [
+    { "start": "00:00:00", "type": "intro", "title": "Opening Titles" },
+    { "start": "00:52:30", "type": "scare", "title": "Chestburster" },
+    { "start": "01:10:45", "type": "scare", "title": "Dallas in the Vents" },
+    { "start": "01:50:20", "type": "action", "title": "The Shuttle" },
+    { "start": "01:53:10", "type": "credits", "title": "End Credits" }
+  ]
+}

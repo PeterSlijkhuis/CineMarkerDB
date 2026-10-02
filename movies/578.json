@@ -1,0 +1,16 @@
+{
+  "$schema": "../schema.json",
+  "schema_version": 1,
+  "tmdb_id": 578,
+  "imdb_id": "tt0073195",
+  "title": "Jaws",
+  "year": 1975,
+  "runtime": "02:04:00",
+  "markers": [
+    { "start": "00:00:00", "type": "intro", "title": "Opening Titles" },
+    { "start": "00:03:10", "type": "scare", "title": "Chrissie's Swim" },
+    { "start": "01:20:50", "type": "scare", "title": "Ben Gardner's Boat", "emoji": "💀" },
+    { "start": "01:22:05", "type": "plot", "title": "You're Gonna Need a Bigger Boat" },
+    { "start": "01:58:30", "type": "credits", "title": "End Credits" }
+  ]
+}
