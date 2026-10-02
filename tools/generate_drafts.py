@@ -1,7 +1,8 @@
 """Generate draft CineMarker files from your own Jellyfin library.
 
 Sources, all local to your server:
-  credits       Jellyfin media segments (type Outro), e.g. from an intro/credits detection plugin
+  credits       Jellyfin media segments (type Outro), e.g. from an intro/credits detection plugin,
+                else a long dialogue gap near the end that is followed by more dialogue
   post_credits  subtitle dialogue that starts after the credits began
   music         subtitle lines marked with a note symbol; SDH subtitles often name the song
   action        clusters of SDH sound cues like [GUNFIRE], [EXPLOSION], [TIRES SCREECHING]
@@ -86,12 +87,25 @@ def post_credits_marker(subs, credits_at):
     return [{"start": after[0], "type": "post_credits", "title": "Post-credits scene"}] if after else []
 
 
+def credits_from_gap(subs, runtime_s):
+    """Credits start guessed from subtitles: the first silence of 150 s or more in the last 15%
+    of the movie that is followed by more dialogue (a mid or post-credits scene).
+    Returns None when there is no such gap, because then the credits start can't be told apart
+    from a quiet ending."""
+    # ponytail: heuristic; a long silent finale with an epilogue after it reads as credits
+    lines = [(s, e) for s, e, body in subs if not NOTE.search(body)]
+    for (_, end), (start, _) in zip(lines, lines[1:]):
+        if end >= 0.85 * runtime_s and start - end >= 150:
+            return end
+    return None
+
+
 def hms(seconds):
     s = int(seconds)
     return f"{s // 3600:02}:{s % 3600 // 60:02}:{s % 60:02}"
 
 
-def build_draft(tmdb_id, runtime_s, subs, credits_at, title=None, year=None):
+def build_draft(tmdb_id, runtime_s, subs, credits_at, title=None, year=None, imdb_id=None):
     markers = [{"start": 0, "type": "intro", "title": "Opening"}]
     markers += music_markers(subs, credits_at) + action_markers(subs, credits_at)
     if credits_at is not None:
@@ -105,6 +119,7 @@ def build_draft(tmdb_id, runtime_s, subs, credits_at, title=None, year=None):
         "$schema": "../schema.json",
         "schema_version": 1,
         "tmdb_id": int(tmdb_id),
+        "imdb_id": imdb_id,
         "title": title,
         "year": year,
         "runtime": hms(runtime_s),
@@ -167,8 +182,9 @@ def main():
         if not tmdb or tmdb in existing or not item.get("RunTimeTicks"):
             continue
         try:
-            credits_at = jf.credits_start(item["Id"])
-            draft = build_draft(tmdb, item["RunTimeTicks"] / 1e7, jf.subtitles(item), credits_at, item.get("Name"), item.get("ProductionYear"))
+            runtime_s, subs = item["RunTimeTicks"] / 1e7, jf.subtitles(item)
+            credits_at = jf.credits_start(item["Id"]) or credits_from_gap(subs, runtime_s)
+            draft = build_draft(tmdb, runtime_s, subs, credits_at, item.get("Name"), item.get("ProductionYear"), (item.get("ProviderIds") or {}).get("Imdb"))
         except Exception as e:  # one broken movie must not stop the run
             print(f"skip {item.get('Name')}: {e}", file=sys.stderr)
             continue

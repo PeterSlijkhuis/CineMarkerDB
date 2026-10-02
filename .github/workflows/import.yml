@@ -1,0 +1,56 @@
+# Nightly: generate CineMarker files from OpenSubtitles for movies not in the DB yet
+# and commit them to the auto-drafts branch. Open a PR from auto-drafts to main to publish.
+name: Import from OpenSubtitles
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+    inputs:
+      max_movies:
+        description: Movies to try this run
+        default: "500"
+
+permissions:
+  contents: write
+
+concurrency: import
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Switch to auto-drafts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git fetch origin auto-drafts; then
+            git checkout -b auto-drafts origin/auto-drafts
+            git merge --no-edit origin/main
+          else
+            git checkout -b auto-drafts
+          fi
+
+      - run: pip install jsonschema
+
+      - name: Import
+        working-directory: tools
+        env:
+          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
+          OPENSUBTITLES_API_KEY: ${{ secrets.OPENSUBTITLES_API_KEY }}
+          OPENSUBTITLES_USERNAME: ${{ secrets.OPENSUBTITLES_USERNAME }}
+          OPENSUBTITLES_PASSWORD: ${{ secrets.OPENSUBTITLES_PASSWORD }}
+        run: python3 import_opensubtitles.py --max-movies "${{ inputs.max_movies || '500' }}"
+
+      - run: python3 validate.py
+
+      - name: Commit
+        run: |
+          git add movies tools/opensubtitles_tried.txt
+          git diff --cached --quiet && exit 0
+          git commit -m "Import $(git diff --cached --name-only --diff-filter=A movies | wc -l) movies from OpenSubtitles"
+          git push origin auto-drafts

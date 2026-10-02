@@ -72,3 +72,26 @@ python3 tools/generate_drafts.py --server http://jellyfin:8096 --api-key YOUR_KE
 
 Create the API key under Dashboard > API Keys. Review each draft, fix or add markers,
 then move it to `movies/` and run `python3 validate.py`. Movies already in `movies/` are skipped.
+
+## Nightly import from OpenSubtitles
+
+`.github/workflows/import.yml` runs every night. It walks TMDB's movies from most to least
+voted, downloads the best English subtitle (hearing impaired preferred) from
+[OpenSubtitles](https://www.opensubtitles.com), runs the same detection as above, and commits
+the new files to the `auto-drafts` branch. Open a PR from `auto-drafts` to `main` to publish
+a batch. Only timestamps and short labels are stored, never subtitle text. Credits without
+Jellyfin segments are guessed from a long silence near the end followed by more dialogue,
+so they only appear for movies with a mid or post-credits scene.
+
+Repository secrets it needs (Settings > Secrets and variables > Actions):
+
+| Secret | Where to get it |
+|---|---|
+| `TMDB_TOKEN` | themoviedb.org > Settings > API > API Read Access Token |
+| `OPENSUBTITLES_API_KEY` | opensubtitles.com > Consumers > new consumer |
+| `OPENSUBTITLES_USERNAME`, `OPENSUBTITLES_PASSWORD` | your opensubtitles.com account |
+
+The run stops when the daily OpenSubtitles download quota is used up and continues the next night.
+Movies already tried are listed in `tools/opensubtitles_tried.txt`.
+
+Tests: `cd tools && python3 test_generate_drafts.py && python3 test_import_opensubtitles.py`
