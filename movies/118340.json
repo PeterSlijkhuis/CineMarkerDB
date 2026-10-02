@@ -1,0 +1,16 @@
+{
+  "$schema": "../schema.json",
+  "schema_version": 1,
+  "tmdb_id": 118340,
+  "imdb_id": "tt2015381",
+  "title": "Guardians of the Galaxy",
+  "year": 2014,
+  "runtime": "02:01:00",
+  "markers": [
+    { "start": "00:00:00", "type": "intro", "title": "Earth, 1988" },
+    { "start": "00:04:30", "type": "music", "title": "Come and Get Your Love" },
+    { "start": "01:49:40", "type": "music", "title": "I Want You Back" },
+    { "start": "01:51:10", "type": "credits", "title": "End Credits" },
+    { "start": "01:59:40", "type": "post_credits", "title": "Post-Credits Scene" }
+  ]
+}
